@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACI Beam Design Check (FPS)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #0056b3;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #0056b3;
+            padding-bottom: 5px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+            margin-right: 10px; /* Add some space between buttons */
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+         button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .results {
+            margin-top: 30px;
+            border-top: 2px solid #0056b3;
+            padding-top: 20px;
+        }
+        .step {
+            background-color: #e9ecef;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+        }
+        .step h3 {
+            margin-top: 0;
+            color: #0056b3;
+            margin-bottom: 10px;
+        }
+        .step p {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+        .step strong {
+            color: #333;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .report-section {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #0056b3;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+        }
+        .report-section h3 {
+            color: #0056b3;
+            margin-top: 0;
+            margin-bottom: 10px;
+            border-bottom: 1px dashed #0056b3;
+            padding-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>ACI Reinforced Concrete Beam Design Check (FPS)</h1>
+
+    <div class="input-group">
+        <label for="b">Beam Width, b (in):</label>
+        <input type="number" id="b" value="12" step="0.1">
+    </div>
+    <div class="input-group">
+        <label for="h">Beam Height, h (in):</label>
+        <input type="number" id="h" value="24" step="0.1">
+    </div>
+    <div class="input-group">
+        <label for="fc">Concrete Compressive Strength, f'c (psi):</label>
+        <input type="number" id="fc" value="4000" step="100">
+    </div>
+    <div class="input-group">
+        <label for="fy">Steel Yield Strength, fy (psi):</label>
+        <input type="number" id="fy" value="60000" step="1000">
+    </div>
+    <div class="input-group">
+        <label for="cover">Clear Cover (in):</label>
+        <input type="number" id="cover" value="1.5" step="0.1">
+    </div>
+     <div class="input-group">
+        <label for="stirrup_dia">Stirrup Diameter (in):</label>
+        <select id="stirrup_dia">
+            <option value="0.375">#3 (0.375 in)</option>
+            <option value="0.5">#4 (0.5 in)</option>
+            <option value="0.625">#5 (0.625 in)</option>
+        </select>
+    </div>
+    <div class="input-group">
+        <label for="bar_dia">Tension Bar Diameter (in):</label>
+         <select id="bar_dia">
+            <option value="0.5">#4 (0.5 in)</option>
+            <option value="0.625">#5 (0.625 in)</option>
+            <option value="0.75">#6 (0.75 in)</option>
+            <option value="0.875">#7 (0.875 in)</option>
+            <option value="1.0">#8 (1.0 in)</option>
+            <option value="1.128">#9 (1.128 in)</option>
+            <option value="1.27">#10 (1.27 in)</option>
+            <option value="1.41">#11 (1.41 in)</option>
+            <option value="1.693">#14 (1.693 in)</option>
+            <option value="2.257">#18 (2.257 in)</option>
+        </select>
+    </div>
+    <div class="input-group">
+        <label for="Mu">Factored Moment, Mu (kip-ft):</label>
+        <input type="number" id="Mu" value="100" step="1">
+    </div>
+     <div class="input-group">
+        <label for="Vu">Factored Shear, Vu (kips):</label>
+        <input type="number" id="Vu" value="50" step="1">
+    </div>
+
+    <button onclick="designBeam()">Design Beam</button>
+    <button onclick="generateReport()" id="reportButton" disabled>Generate Report</button>
+    <button onclick="downloadReportPdf()" id="downloadPdfButton" disabled>Download Report PDF</button>
+
+
+    <div class="results" id="results">
+        <h2>Design Results and Steps</h2>
+        <div id="flexure-results"></div>
+        <div id="shear-results"></div>
+         <div id="final-report" class="report-section" style="display:none;"></div>
+    </div>
+</div>
+
+<script>
+    let designResults = null; // Variable to store results for the report
+
+    function designBeam() {
+        // Clear previous results and report
+        document.getElementById('flexure-results').innerHTML = '';
+        document.getElementById('shear-results').innerHTML = '';
+        document.getElementById('final-report').style.display = 'none';
+        document.getElementById('final-report').innerHTML = '';
+        document.getElementById('reportButton').disabled = true; // Disable report button until design is complete
+        document.getElementById('downloadPdfButton').disabled = true; // Disable PDF button until report is generated
+
+        // Get input values
+        const b = parseFloat(document.getElementById('b').value);
+        const h = parseFloat(document.getElementById('h').value);
+        const fc = parseFloat(document.getElementById('fc').value);
+        const fy = parseFloat(document.getElementById('fy').value);
+        const cover = parseFloat(document.getElementById('cover').value);
+        const stirrupDia = parseFloat(document.getElementById('stirrup_dia').value);
+        const barDia = parseFloat(document.getElementById('bar_dia').value); // Assuming tension steel bar size for d calculation
+        const Mu_kip_ft = parseFloat(document.getElementById('Mu').value);
+        const Vu_kips = parseFloat(document.getElementById('Vu').value);
+
+        // Validate inputs
+        if (isNaN(b) || isNaN(h) || isNaN(fc) || isNaN(fy) || isNaN(cover) || isNaN(stirrupDia) || isNaN(barDia) || isNaN(Mu_kip_ft) || isNaN(Vu_kips) || b <= 0 || h <= 0 || fc <= 0 || fy <= 0 || cover < 0 || stirrupDia <= 0 || barDia <= 0) {
+            document.getElementById('results').innerHTML = '<p class="error">Please enter valid positive numbers for all inputs.</p>';
+            designResults = null; // Clear results if inputs are invalid
+            return;
+        }
+
+        // Convert Mu to kip-in
+        const Mu_kip_in = Mu_kip_ft * 12;
+
+        // ACI Code Factors
+        const phi_flexure = 0.9;
+        const phi_shear = 0.75;
+        const lambda = 1.0; // Normal weight concrete
+
+        // --- Flexural Design ---
+        let flexureSteps = '<h3>Flexural Design Steps:</h3>';
+        let flexureResults = {}; // Store flexure results
+
+        // Step 1: Calculate Effective Depth (d)
+        const d = h - cover - stirrupDia - (barDia / 2);
+        flexureSteps += `<div class="step"><h3>Step 1: Calculate Effective Depth (d)</h3><p>$d = h - \text{cover} - \text{stirrup\_dia} - \text{bar\_dia}/2$</p><p>$d = ${h} - ${cover} - ${stirrupDia} - (${barDia} / 2) = ${d.toFixed(3)}$ in</p></div>`;
+        flexureResults.d = d;
+
+        if (d <= 0) {
+             flexureSteps += `<div class="step"><p class="error">Effective depth 'd' is not positive. Increase beam height or reduce cover/bar sizes.</p></div>`;
+             document.getElementById('flexure-results').innerHTML = flexureSteps;
+             designResults = null;
+             return;
+        }
+
+        // Step 2: Calculate Required Steel Area (As) using Quadratic Formula
+        const A = (phi_flexure * Math.pow(fy, 2)) / (1.7 * fc * b);
+        const B = -(phi_flexure * fy * d);
+        const C = Mu_kip_in;
+        const discriminant = Math.pow(B, 2) - 4 * A * C;
+
+        let As_required = 0;
+        if (discriminant < 0) {
+            flexureSteps += `<div class="step"><h3>Step 2: Calculate Required Steel Area (As)</h3><p class="error">Discriminant is negative. The required moment capacity exceeds the theoretical maximum capacity of the section for the given materials. Increase beam size or material strengths.</p></div>`;
+             document.getElementById('flexure-results').innerHTML = flexureSteps;
+             designResults = null;
+             return;
+        } else {
+            const As1 = (-B + Math.sqrt(discriminant)) / (2 * A);
+            const As2 = (-B - Math.sqrt(discriminant)) / (2 * A);
+            As_required = Math.min(As1, As2);
+             flexureSteps += `<div class="step"><h3>Step 2: Calculate Required Steel Area (As)</h3><p>Using quadratic formula for $A_s$ from $M_u = \phi M_n$:</p><p>$A A_s^2 + B A_s + C = 0$</p><p>$A = \\frac{\phi f_y^2}{1.7 f'_c b} = \\frac{${phi_flexure} \times ${fy}^2}{1.7 \times ${fc} \times ${b}} = ${A.toFixed(6)}$</p><p>$B = -\phi f_y d = -${phi_flexure} \times ${fy} \times ${d.toFixed(3)} = ${B.toFixed(2)}$</p><p>$C = M_u = ${Mu_kip_in.toFixed(2)}$ kip-in</p><p>Discriminant = $B^2 - 4AC = ${B.toFixed(2)}^2 - 4 \times ${A.toFixed(6)} \times ${C.toFixed(2)} = ${discriminant.toFixed(2)}$</p><p>Solving for $A_s$: $A_s = \\frac{-B \pm \sqrt{Discriminant}}{2A}$</p><p>$A_{s,1} = ${As1.toFixed(3)}$ in$^2$, $A_{s,2} = ${As2.toFixed(3)}$ in$^2$</p><p>Required $A_s$ (smaller positive root) = ${As_required.toFixed(3)}$ in$^2$</p></div>`;
+             flexureResults.As_required = As_required;
+        }
+
+        // Step 3: Calculate Steel Ratio (rho)
+        const rho = As_required / (b * d);
+        flexureSteps += `<div class="step"><h3>Step 3: Calculate Steel Ratio (ρ)</h3><p>$\\rho = A_s / (b d)$</p><p>$\\rho = ${As_required.toFixed(3)} / (${b} \times ${d.toFixed(3)}) = ${rho.toFixed(6)}$</p></div>`;
+        flexureResults.rho = rho;
+
+        // Step 4: Calculate Minimum Steel Ratio (rho_min)
+        const rho_min1 = (3 * Math.sqrt(fc)) / fy;
+        const rho_min2 = 200 / fy;
+        const rho_min = Math.max(rho_min1, rho_min2);
+        flexureSteps += `<div class="step"><h3>Step 4: Calculate Minimum Steel Ratio (ρ_min) (ACI 9.6.1.2)</h3><p>$\\rho_{min,1} = \\frac{3 \sqrt{f'_c}}{f_y} = \\frac{3 \sqrt{${fc}}}{${fy}} = ${rho_min1.toFixed(6)}$</p><p>$\\rho_{min,2} = \\frac{200}{f_y} = \\frac{200}{${fy}} = ${rho_min2.toFixed(6)}$</p><p>$\\rho_{min} = \max(\\rho_{min,1}, \\rho_{min,2}) = \max(${rho_min1.toFixed(6)}, ${rho_min2.toFixed(6)}) = ${rho_min.toFixed(6)}$</p></div>`;
+        flexureResults.rho_min = rho_min;
+
+        // Step 5: Calculate Maximum Steel Ratio (rho_max) for Tension Control (ACI 21.2.2.4)
+        let beta1 = 0.85;
+        if (fc > 4000) {
+            beta1 = Math.max(0.85 - 0.05 * (fc - 4000) / 1000, 0.65);
+        }
+        const rho_max_tension_controlled = 0.85 * beta1 * (fc / fy) * (0.003 / (0.003 + 0.005));
+         flexureSteps += `<div class="step"><h3>Step 5: Calculate Maximum Steel Ratio (ρ_max) for Tension Control (ACI 21.2.2.4)</h3><p>$\\beta_1$ calculation: For $f'_c = ${fc}$ psi, $\\beta_1 = ${beta1.toFixed(2)}$</p><p>$\\rho_{max, tension} = 0.85 \\beta_1 \\frac{f'_c}{f_y} \\frac{0.003}{0.003 + 0.005}$</p><p>$\\rho_{max, tension} = 0.85 \times ${beta1.toFixed(2)} \times \\frac{${fc}}{${fy}} \times \\frac{0.003}{0.008} = ${rho_max_tension_controlled.toFixed(6)}$</p></div>`;
+         flexureResults.rho_max_tension_controlled = rho_max_tension_controlled;
+
+
+        // Step 6: Check Steel Ratio Limits
+        let flexureCheck = "";
+        let flexureStatus = "OK";
+        if (rho < rho_min) {
+            flexureCheck = `<p class="error">Steel ratio ($\\rho = ${rho.toFixed(6)}$) is less than minimum ($\\rho_{min} = ${rho_min.toFixed(6)}$). Provide at least $A_s = \\rho_{min} \times b \times d = ${rho_min.toFixed(6)} \times ${b} \times ${d.toFixed(3)} = ${(rho_min * b * d).toFixed(3)}$ in$^2$.</p>`;
+             As_required = rho_min * b * d; // Use minimum As if required for subsequent calculations
+             flexureStatus = "Minimum As Required";
+        } else if (rho > rho_max_tension_controlled) {
+             flexureCheck = `<p class="error">Steel ratio ($\\rho = ${rho.toFixed(6)}$) exceeds maximum for tension control ($\\rho_{max, tension} = ${rho_max_tension_controlled.toFixed(6)}$). The section is compression controlled or transition. Increase beam size or use compression steel.</p>`;
+             flexureStatus = "Exceeds Tension Control Limit";
+        } else {
+            flexureCheck = `<p>Steel ratio ($\\rho = ${rho.toFixed(6)}$) is between minimum ($\\rho_{min} = ${rho_min.toFixed(6)}$) and maximum for tension control ($\\rho_{max, tension} = ${rho_max_tension_controlled.toFixed(6)}$). Section is likely tension-controlled.</p>`;
+             flexureStatus = "OK (Tension Controlled)";
+        }
+         flexureSteps += `<div class="step"><h3>Step 6: Check Steel Ratio Limits</h3>${flexureCheck}</div>`;
+         flexureResults.flexureStatus = flexureStatus;
+         flexureResults.As_provided_for_check = As_required; // Store the As used for Mn calculation
+
+
+        // Step 7: Calculate Nominal Moment Capacity (Mn) for the Required As (or minimum As)
+         const a_calc = (As_required * fy) / (0.85 * fc * b);
+         const Mn_calc_kip_in = As_required * fy * (d - a_calc / 2);
+         const phiMn_calc_kip_in = phi_flexure * Mn_calc_kip_in;
+         const phiMn_calc_kip_ft = phiMn_calc_kip_in / 12;
+
+         flexureSteps += `<div class="step"><h3>Step 7: Calculate Nominal Moment Capacity ($\phi M_n$) for Required $A_s$</h3><p>Calculate depth of compression block 'a':</p><p>$a = \\frac{A_s f_y}{0.85 f'_c b} = \\frac{${As_required.toFixed(3)} \times ${fy}}{0.85 \times ${fc} \times ${b}} = ${a_calc.toFixed(3)}$ in</p><p>Nominal Moment Capacity $M_n = A_s f_y (d - a/2)$</p><p>$M_n = ${As_required.toFixed(3)} \times ${fy} \times (${d.toFixed(3)} - ${a_calc.toFixed(3)} / 2) = ${Mn_calc_kip_in.toFixed(2)}$ kip-in</p><p>Design Moment Capacity $\phi M_n = \phi \times M_n = ${phi_flexure} \times ${Mn_calc_kip_in.toFixed(2)} = ${phiMn_calc_kip_in.toFixed(2)}$ kip-in</p><p>$\phi M_n = ${phiMn_calc_kip_ft.toFixed(2)}$ kip-ft</p><p>Check: $\phi M_n = ${phiMn_calc_kip_ft.toFixed(2)}$ kip-ft $\ge M_u = ${Mu_kip_ft}$ kip-ft (${phiMn_calc_kip_ft >= Mu_kip_ft ? 'OK' : 'NOT OK'})</p></div>`;
+         flexureResults.phiMn_kip_ft = phiMn_calc_kip_ft;
+         flexureResults.Mu_kip_ft = Mu_kip_ft;
+         flexureResults.momentCheck = phiMn_calc_kip_ft >= Mu_kip_ft ? 'OK' : 'NOT OK';
+
+
+        document.getElementById('flexure-results').innerHTML = flexureSteps;
+
+
+        // --- Shear Design ---
+        let shearSteps = '<h3>Shear Design Steps:</h3>';
+        let shearResults = {}; // Store shear results
+
+        // Step 1: Calculate Concrete Shear Strength (phi Vc)
+        const Vc = 2 * lambda * Math.sqrt(fc) * b * d; // psi * in * in = lbs
+        const Vc_kips = Vc / 1000; // convert lbs to kips
+        const phiVc_kips = phi_shear * Vc_kips;
+
+        shearSteps += `<div class="step"><h3>Step 1: Calculate Concrete Shear Strength ($\phi V_c$) (ACI 22.5.5.1)</h3><p>$V_c = 2 \lambda \sqrt{f'_c} b_w d$ (in lbs)</p><p>$V_c = 2 \times ${lambda} \times \sqrt{${fc}} \times ${b} \times ${d.toFixed(3)} = ${Vc.toFixed(2)}$ lbs</p><p>$V_c = ${Vc_kips.toFixed(2)}$ kips</p><p>Design Concrete Shear Strength $\phi V_c = \phi \times V_c = ${phi_shear} \times ${Vc_kips.toFixed(2)} = ${phiVc_kips.toFixed(2)}$ kips</p></div>`;
+        shearResults.phiVc_kips = phiVc_kips;
+
+
+        // Step 2: Check if Shear Reinforcement is Required
+        let shearCheck = "";
+        let Vs_required_kips = 0;
+        let Av_s_required = 0;
+        let min_Av_s = 0;
+        let s_max = Infinity; // Initialize with a large value
+        let shearStatus = "";
+
+        if (Vu_kips <= phiVc_kips / 2) {
+            shearCheck = `<p>Factored shear ($V_u = ${Vu_kips}$ kips) is less than $\phi V_c / 2 = ${phiVc_kips.toFixed(2)} / 2 = ${(phiVc_kips/2).toFixed(2)}$ kips.</p><p>No shear reinforcement is required by ACI 9.6.3.1.</p>`;
+            shearStatus = "No Shear Reinforcement Required";
+            s_max = "N/A"; // No spacing needed
+        } else if (Vu_kips <= phiVc_kips) {
+            shearCheck = `<p>Factored shear ($V_u = ${Vu_kips}$ kips) is greater than $\phi V_c / 2 = ${(phiVc_kips/2).toFixed(2)}$ kips but less than $\phi V_c = ${phiVc_kips.toFixed(2)}$ kips.</p><p>Minimum shear reinforcement is required by ACI 9.6.3.1.</p>`;
+            shearStatus = "Minimum Shear Reinforcement Required";
+
+            // Calculate minimum Av/s
+            const min_Av_s1 = (0.75 * Math.sqrt(fc) * b) / fy;
+            const min_Av_s2 = (50 * b) / fy;
+            min_Av_s = Math.max(min_Av_s1, min_Av_s2); // in^2/in
+            shearResults.min_Av_s = min_Av_s;
+
+            shearCheck += `<p>Minimum $(A_v/s)_{min}$ calculation (ACI 9.6.3.3):</p><p>$(A_v/s)_{min,1} = \\frac{0.75 \sqrt{f'_c} b_w}{f_y} = \\frac{0.75 \sqrt{${fc}} \times ${b}}{${fy}} = ${min_Av_s1.toFixed(6)}$ in$^2$/in</p><p>$(A_v/s)_{min,2} = \\frac{50 b_w}{f_y} = \\frac{50 \times ${b}}{${fy}} = ${min_Av_s2.toFixed(6)}$ in$^2$/in</p><p>Required Minimum $(A_v/s)_{min} = \max(${min_Av_s1.toFixed(6)}, ${min_Av_s2.toFixed(6)}) = ${min_Av_s.toFixed(6)}$ in$^2$/in</p>`;
+
+             // Calculate maximum spacing for minimum reinforcement
+             s_max = Math.min(d / 2, 24); // ACI 9.7.6.2.2
+             shearCheck += `<p>Maximum spacing $s_{max} = \min(d/2, 24 \text{ in}) = \min(${d.toFixed(3)}/2, 24) = \min(${d/2..toFixed(3)}, 24) = ${s_max.toFixed(2)}$ in (ACI 9.7.6.2.2)</p>`;
+             shearResults.s_max = s_max;
+
+
+        } else { // Vu_kips > phiVc_kips
+            shearCheck = `<p>Factored shear ($V_u = ${Vu_kips}$ kips) is greater than $\phi V_c = ${phiVc_kips.toFixed(2)}$ kips.</p><p>Shear reinforcement is required to resist $V_s = (V_u - \phi V_c) / \phi$.</p>`;
+            shearStatus = "Shear Reinforcement Required";
+
+            Vs_required_kips = (Vu_kips - phiVc_kips) / phi_shear;
+            shearCheck += `<p>$V_s = (${Vu_kips} - ${phiVc_kips.toFixed(2)}) / ${phi_shear} = ${Vs_required_kips.toFixed(2)}$ kips</p>`;
+            shearResults.Vs_required_kips = Vs_required_kips;
+
+
+            // Check if section size is adequate
+            const max_Vs_capacity_kips = 8 * Math.sqrt(fc) * b * d / 1000; // Convert lbs to kips
+            shearResults.max_Vs_capacity_kips = max_Vs_capacity_kips;
+            if (Vs_required_kips > max_Vs_capacity_kips) {
+                 shearCheck += `<p class="error">Required $V_s = ${Vs_required_kips.toFixed(2)}$ kips exceeds the maximum allowed shear strength provided by shear reinforcement ($8 \sqrt{f'_c} b_w d = ${max_Vs_capacity_kips.toFixed(2)}$ kips). Increase beam size.</p>`;
+                 shearStatus = "Section Size Inadequate for Shear";
+                 document.getElementById('shear-results').innerHTML = shearSteps + `<div class="step"><h3>Step 2: Check Shear Reinforcement Requirement</h3>${shearCheck}</div>`;
+                 designResults = null;
+                 return;
+            }
+
+            // Calculate required Av/s
+            Av_s_required = (Vs_required_kips * 1000) / (fy * d); // Convert Vs back to lbs for Av/s calculation
+            shearResults.Av_s_required = Av_s_required;
+
+            shearCheck += `<p>Required $(A_v/s) = V_s / (f_y d)$ (in$^2$/in)</p><p>$(A_v/s) = (${Vs_required_kips.toFixed(2)} \times 1000) / (${fy} \times ${d.toFixed(3)}) = ${Av_s_required.toFixed(6)}$ in$^2$/in</p>`;
+
+            // Determine maximum spacing
+            const Vs_limit_for_d_over_2_spacing_kips = 4 * Math.sqrt(fc) * b * d / 1000; // Convert lbs to kips
+            if (Vs_required_kips <= Vs_limit_for_d_over_2_spacing_kips) {
+                s_max = Math.min(d / 2, 24); // ACI 9.7.6.2.2
+                 shearCheck += `<p>Since $V_s = ${Vs_required_kips.toFixed(2)}$ kips $\le 4 \sqrt{f'_c} b_w d = ${Vs_limit_for_d_over_2_spacing_kips.toFixed(2)}$ kips, maximum spacing $s_{max} = \min(d/2, 24 \text{ in}) = \min(${d.toFixed(3)}/2, 24) = \min(${d/2..toFixed(3)}, 24) = ${s_max.toFixed(2)}$ in (ACI 9.7.6.2.2)</p>`;
+            } else {
+                s_max = Math.min(d / 4, 12); // ACI 9.7.6.2.2
+                 shearCheck += `<p>Since $V_s = ${Vs_required_kips.toFixed(2)}$ kips $> 4 \sqrt{f'_c} b_w d = ${Vs_limit_for_d_over_2_spacing_kips.toFixed(2)}$ kips, maximum spacing $s_{max} = \min(d/4, 12 \text{ in}) = \min(${d.toFixed(3)}/4, 12) = \min(${(d/4).toFixed(3)}, 12) = ${s_max.toFixed(2)}$ in (ACI 9.7.6.2.2)</p>`;
+            }
+             shearResults.s_max = s_max;
+        }
+
+         shearSteps += `<div class="step"><h3>Step 2: Check Shear Reinforcement Requirement</h3>${shearCheck}</div>`;
+         shearResults.shearStatus = shearStatus;
+
+
+        // Step 3: Determine Required Stirrup Spacing (if reinforcement is needed)
+        let required_s = "N/A";
+        const Av_stirrup = 2 * (Math.PI * Math.pow(stirrupDia / 2, 2)); // Area of one stirrup (2 legs)
+        shearResults.Av_stirrup = Av_stirrup;
+        shearResults.stirrupSize = getBarSize(stirrupDia);
+
+        if (Vu_kips > phiVc_kips / 2) {
+            if (Vu_kips <= phiVc_kips) { // Minimum reinforcement case
+                required_s = Av_stirrup / min_Av_s;
+                 shearSteps += `<div class="step"><h3>Step 3: Determine Required Stirrup Spacing (Minimum Reinforcement)</h3><p>Using # ${getBarSize(stirrupDia)} stirrups ($A_v = ${Av_stirrup.toFixed(3)}$ in$^2$), required spacing $s = A_v / (A_v/s)_{min}$</p><p>$s = ${Av_stirrup.toFixed(3)} / ${min_Av_s.toFixed(6)} = ${required_s.toFixed(2)}$ in</p></div>`;
+            } else { // Required Vs case
+                required_s = Av_stirrup / Av_s_required;
+                 shearSteps += `<div class="step"><h3>Step 3: Determine Required Stirrup Spacing (Based on $V_s$)</h3><p>Using # ${getBarSize(stirrupDia)} stirrups ($A_v = ${Av_stirrup.toFixed(3)}$ in$^2$), required spacing $s = A_v / (A_v/s)_{required}$</p><p>$s = ${Av_stirrup.toFixed(3)} / ${Av_s_required.toFixed(6)} = ${required_s.toFixed(2)}$ in</p></div>`;
+            }
+            shearResults.required_s = required_s;
+
+            // Step 4: Check Stirrup Spacing against Maximum Allowed
+            let spacingCheck = "";
+            let spacingStatus = "";
+            if (required_s > s_max) {
+                spacingCheck = `<p class="error">Calculated required spacing ($s = ${required_s.toFixed(2)}$ in) is greater than the maximum allowed spacing ($s_{max} = ${s_max.toFixed(2)}$ in). Use a smaller spacing, such as $s_{max}$.</p>`;
+                spacingStatus = "Spacing Exceeds Maximum";
+            } else {
+                spacingCheck = `<p>Calculated required spacing ($s = ${required_s.toFixed(2)}$ in) is less than or equal to the maximum allowed spacing ($s_{max} = ${s_max.toFixed(2)}$ in). OK.</p><p>Provide # ${getBarSize(stirrupDia)} stirrups at a spacing of ${Math.floor(required_s).toFixed(0)}$ inches or less.</p>`;
+                 spacingStatus = "Spacing OK";
+            }
+             shearSteps += `<div class="step"><h3>Step 4: Check Stirrup Spacing against Maximum Allowed</h3>${spacingCheck}</div>`;
+             shearResults.spacingStatus = spacingStatus;
+             shearResults.provided_s = Math.floor(required_s); // Suggest floor for practical spacing
+        } else {
+             shearResults.required_s = required_s;
+             shearResults.spacingStatus = "N/A";
+             shearResults.provided_s = "N/A";
+        }
+
+
+        document.getElementById('shear-results').innerHTML = shearSteps;
+
+        // Store results for report generation
+        designResults = {
+            inputs: { b, h, fc, fy, cover, stirrupDia, barDia, Mu_kip_ft, Vu_kips },
+            flexure: flexureResults,
+            shear: shearResults
+        };
+
+        document.getElementById('reportButton').disabled = false; // Enable report button
+    }
+
+    function generateReport() {
+        if (!designResults) {
+            document.getElementById('final-report').innerHTML = '<p class="error">Please run the design check first.</p>';
+            document.getElementById('final-report').style.display = 'block';
+            document.getElementById('downloadPdfButton').disabled = true; // Keep PDF button disabled
+            return;
+        }
+
+        const inputs = designResults.inputs;
+        const flexure = designResults.flexure;
+        const shear = designResults.shear;
+
+        let reportContent = '<h3>Design Summary Report</h3>';
+
+        // Input Summary
+        reportContent += '<div class="report-section"><h3>Input Parameters</h3>';
+        reportContent += `<p><strong>Beam Width (b):</strong> ${inputs.b} in</p>`;
+        reportContent += `<p><strong>Beam Height (h):</strong> ${inputs.h} in</p>`;
+        reportContent += `<p><strong>Concrete Strength (f'c):</strong> ${inputs.fc} psi</p>`;
+        reportContent += `<p><strong>Steel Yield Strength (fy):</strong> ${inputs.fy} psi</p>`;
+        reportContent += `<p><strong>Clear Cover:</strong> ${inputs.cover} in</p>`;
+        reportContent += `<p><strong>Stirrup Size:</strong> #${getBarSize(inputs.stirrupDia)} (${inputs.stirrupDia} in diameter)</p>`;
+        reportContent += `<p><strong>Tension Bar Size (for d):</strong> #${getBarSize(inputs.barDia)} (${inputs.barDia} in diameter)</p>`;
+        reportContent += `<p><strong>Factored Moment (Mu):</strong> ${inputs.Mu_kip_ft} kip-ft</p>`;
+        reportContent += `<p><strong>Factored Shear (Vu):</strong> ${inputs.Vu_kips} kips</p>`;
+        reportContent += '</div>';
+
+        // Flexure Summary
+        reportContent += '<div class="report-section"><h3>Flexural Design Summary</h3>';
+        reportContent += `<p><strong>Effective Depth (d):</strong> ${flexure.d.toFixed(3)} in</p>`;
+        reportContent += `<p><strong>Required Steel Area (As):</strong> ${flexure.As_required.toFixed(3)} in²</p>`;
+        if (flexure.flexureStatus === "Minimum As Required") {
+             reportContent += `<p><strong>Minimum Required As:</strong> ${flexure.As_provided_for_check.toFixed(3)} in² (Governs)</p>`;
+        }
+        reportContent += `<p><strong>Calculated Steel Ratio (ρ):</strong> ${flexure.rho.toFixed(6)}</p>`;
+        reportContent += `<p><strong>Minimum Steel Ratio (ρ_min):</strong> ${flexure.rho_min.toFixed(6)}</p>`;
+        reportContent += `<p><strong>Maximum Steel Ratio (ρ_max, tension):</strong> ${flexure.rho_max_tension_controlled.toFixed(6)}</p>`;
+        reportContent += `<p><strong>Steel Ratio Check:</strong> ${flexure.flexureStatus}</p>`;
+        reportContent += `<p><strong>Design Moment Capacity (φMn):</strong> ${flexure.phiMn_kip_ft.toFixed(2)} kip-ft</p>`;
+        reportContent += `<p><strong>Factored Moment (Mu):</strong> ${flexure.Mu_kip_ft.toFixed(2)} kip-ft</p>`;
+        reportContent += `<p><strong>Moment Capacity Check:</strong> φMn ≥ Mu (${flexure.momentCheck})</p>`;
+        reportContent += '</div>';
+
+        // Shear Summary
+        reportContent += '<div class="report-section"><h3>Shear Design Summary</h3>';
+        reportContent += `<p><strong>Design Concrete Shear Strength (φVc):</strong> ${shear.phiVc_kips.toFixed(2)} kips</p>`;
+        reportContent += `<p><strong>Factored Shear (Vu):</strong> ${inputs.Vu_kips} kips</p>`;
+        reportContent += `<p><strong>Shear Reinforcement Requirement:</strong> ${shear.shearStatus}</p>`;
+
+        if (shear.shearStatus !== "No Shear Reinforcement Required") {
+             reportContent += `<p><strong>Stirrup Area (Av) for #${shear.stirrupSize}:</strong> ${shear.Av_stirrup.toFixed(3)} in²</p>`;
+            if (shear.shearStatus === "Minimum Shear Reinforcement Required") {
+                 reportContent += `<p><strong>Minimum Required (Av/s):</strong> ${shear.min_Av_s.toFixed(6)} in²/in</p>`;
+                 reportContent += `<p><strong>Calculated Required Spacing (s):</strong> ${shear.required_s.toFixed(2)} in</p>`;
+            } else if (shear.shearStatus === "Shear Reinforcement Required") {
+                 reportContent += `<p><strong>Required Vs:</strong> ${shear.Vs_required_kips.toFixed(2)} kips</p>`;
+                 reportContent += `<p><strong>Required (Av/s):</strong> ${shear.Av_s_required.toFixed(6)} in²/in</p>`;
+                 reportContent += `<p><strong>Calculated Required Spacing (s):</strong> ${shear.required_s.toFixed(2)} in</p>`;
+                 reportContent += `<p><strong>Maximum Allowed Vs:</strong> ${shear.max_Vs_capacity_kips.toFixed(2)} kips</p>`;
+            }
+             reportContent += `<p><strong>Maximum Allowed Spacing (s_max):</strong> ${shear.s_max.toFixed(2)} in</p>`;
+             reportContent += `<p><strong>Spacing Check:</strong> ${shear.spacingStatus}</p>`;
+             if (shear.provided_s !== "N/A") {
+                  reportContent += `<p><strong>Suggested Stirrup Spacing:</strong> Provide #${shear.stirrupSize} stirrups at ${shear.provided_s} in on center or less.</p>`;
+             }
+
+        }
+         if (shear.shearStatus === "Section Size Inadequate for Shear") {
+             reportContent += `<p class="error"><strong>Conclusion:</strong> Beam section is inadequate for the factored shear. Increase beam size.</p>`;
+         } else if (flexure.flexureStatus === "Exceeds Tension Control Limit") {
+             reportContent += `<p class="error"><strong>Conclusion:</strong> Flexural reinforcement exceeds tension-controlled limit. Increase beam size or consider compression steel.</p>`;
+         } else if (flexure.momentCheck === "NOT OK") {
+              reportContent += `<p class="error"><strong>Conclusion:</strong> Design moment capacity (φMn) is less than factored moment (Mu). Increase tension reinforcement or beam size.</p>`;
+         }
+         else {
+            reportContent += `<p><strong>Conclusion:</strong> The section capacity is adequate for the given factored loads based on this check.</p>`;
+         }
+
+
+        reportContent += '</div>';
+
+
+        document.getElementById('final-report').innerHTML = reportContent;
+        document.getElementById('final-report').style.display = 'block'; // Show the report section
+        document.getElementById('downloadPdfButton').disabled = false; // Enable PDF button
+    }
+
+    function downloadReportPdf() {
+        const element = document.getElementById('final-report'); // Get the report section element
+
+        // Options for PDF generation
+        const options = {
+            margin: 0.5,
+            filename: 'beam_design_report.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+
+        // Use html2pdf to generate and download the PDF
+        html2pdf().from(element).set(options).save();
+    }
+
+
+    // Helper function to get standard bar size from diameter
+    function getBarSize(diameter) {
+        const barSizes = {
+            0.375: 3,
+            0.5: 4,
+            0.625: 5,
+            0.75: 6,
+            0.875: 7,
+            1.0: 8,
+            1.128: 9,
+            1.27: 10,
+            1.41: 11,
+            1.693: 14,
+            2.257: 18
+        };
+        return barSizes[diameter] || 'Unknown';
+    }
+
+</script>
+
+</body>
+</html>
